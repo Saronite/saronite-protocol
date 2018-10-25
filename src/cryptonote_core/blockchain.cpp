@@ -95,7 +95,7 @@ static const struct {
   // version 7 from the start of the blockchain, inhereted from Monero mainnet
   { 7, 1, 0, 1503046577 },
   { 8, 3, 0, 1533006000 },
-  { 9, 23100, 0, 1543582714 },
+  { 9, 10000, 0, 1543582714 },
 };
 
 static const struct {
@@ -119,7 +119,7 @@ static const struct {
   // version 7 from the start of the blockchain, inhereted from Monero testnet
   { 7, 1, 0, 1341378000 },
   { 8, 3, 0, 1533006000 },
-  { 9, 23100, 0, 1536840000 },
+  { 9, 5500, 0, 1536840000 },
 };
 
 //------------------------------------------------------------------
