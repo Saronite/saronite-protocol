@@ -56,7 +56,7 @@ TEST(service_nodes, staking_requirement)
 
   // Starting height for stagenet
   {
-    uint64_t height = 96210;
+    uint64_t height = 5500;
     uint64_t stagenet_requirement  = service_nodes::get_staking_requirement(cryptonote::STAGENET, height);
     ASSERT_EQ(stagenet_requirement, (45000 * COIN));
   }
@@ -65,7 +65,7 @@ TEST(service_nodes, staking_requirement)
   {
     // NOTE: The maximum staking requirement is 50,000, in atomic units is 50,000,000,000,000 < int64 range (2^63-1)
     // so casting is safe.
-    uint64_t height = 101250;
+    uint64_t height = 10000;
     int64_t mainnet_requirement  = (int64_t)service_nodes::get_staking_requirement(cryptonote::MAINNET, height);
     int64_t stagenet_requirement = (int64_t)service_nodes::get_staking_requirement(cryptonote::STAGENET, height);
 
