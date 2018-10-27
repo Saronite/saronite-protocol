@@ -181,7 +181,7 @@ int main(int argc, char const * argv[])
     }
 
     // data_dir
-    //   default: e.g. ~/.loki/ or ~/.loki/testnet
+    //   default: e.g. ~/.bitsaronite/ or ~/.bitsaronite/testnet
     //   if data-dir argument given:
     //     absolute path
     //     relative path: relative to cwd

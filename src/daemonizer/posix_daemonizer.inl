@@ -101,7 +101,7 @@ namespace daemonizer
     }
     else
     {
-      //LOG_PRINT_L0("Loki '" << SARONITE_RELEASE_NAME << "' (v" << SARONITE_VERSION_FULL);
+      //LOG_PRINT_L0("Saronite '" << SARONITE_RELEASE_NAME << "' (v" << SARONITE_VERSION_FULL);
       return executor.run_interactive(vm);
     }
   }

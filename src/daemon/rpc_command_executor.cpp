@@ -1168,8 +1168,8 @@ bool t_rpc_command_executor::stop_daemon()
 //# ifdef WIN32
 //    // Stop via service API
 //    // TODO - this is only temporary!  Get rid of hard-coded constants!
-//    bool ok = windows::stop_service("Loki Daemon");
-//    ok = windows::uninstall_service("Loki Daemon");
+//    bool ok = windows::stop_service("Saronite Daemon");
+//    ok = windows::uninstall_service("Saronite Daemon");
 //    //bool ok = windows::stop_service(SERVICE_NAME);
 //    //ok = windows::uninstall_service(SERVICE_NAME);
 //    if (ok)
@@ -1213,10 +1213,10 @@ bool t_rpc_command_executor::print_status()
   bool daemon_is_alive = m_rpc_client->check_connection();
 
   if(daemon_is_alive) {
-    tools::success_msg_writer() << "lokid is running";
+    tools::success_msg_writer() << "saronited is running";
   }
   else {
-    tools::fail_msg_writer() << "lokid is NOT running";
+    tools::fail_msg_writer() << "saronited is NOT running";
   }
 
   return true;
@@ -2439,7 +2439,7 @@ bool t_rpc_command_executor::prepare_registration()
 
     std::cout << "Minimum amount that can be reserved: " << cryptonote::print_money(min_contribution) << " " << cryptonote::get_unit() << std::endl;
 
-    std::cout << "How much loki does the operator want to reserve in the stake? ";
+    std::cout << "How much saronite does the operator want to reserve in the stake? ";
     std::string contribution_string;
     std::cin >> contribution_string;
     uint64_t operator_cut;
@@ -2497,7 +2497,7 @@ bool t_rpc_command_executor::prepare_registration()
       const uint64_t amount_left = get_amount_to_make_portions(staking_requirement, portions_remaining);
       std::cout << "The minimum amount possible to contribute is " << cryptonote::print_money(min_contribution) << " " << cryptonote::get_unit() << std::endl;
       std::cout << "There is " << cryptonote::print_money(amount_left) << " " << cryptonote::get_unit() << " left to meet the staking requirement." << std::endl;
-      std::cout << "How much loki does " << contributor_name << " want to reserve in the stake? ";
+      std::cout << "How much saronite does " << contributor_name << " want to reserve in the stake? ";
       uint64_t contribution_amount;
       std::string contribution_string;
       std::cin >> contribution_string;
@@ -2521,7 +2521,7 @@ bool t_rpc_command_executor::prepare_registration()
       total_reserved_contributions += get_actual_amount(staking_requirement, portions);
     }
 
-    std::cout << "Enter the loki address for " << contributor_name << ": ";
+    std::cout << "Enter the saronite address for " << contributor_name << ": ";
     std::string address_string;
     // the addresses will be validated later down the line
     if(!(std::cin >> address_string))
