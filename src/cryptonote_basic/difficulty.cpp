@@ -197,12 +197,52 @@ namespace cryptonote {
     nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
 
     // No limits should be employed, but this is correct way to employ a 20% symmetrical limit:
-    // nextDifficulty=max(previous_Difficulty*0.8,min(previous_Difficulty/0.8, next_Difficulty));
+    // nextDifficulty=max(previous_Difficulty*0.8,min(previous_Difficulty/0.8, next_difficultyifficulty));
     next_difficulty = static_cast<uint64_t>(nextDifficulty);
 
     if (next_difficulty == 0)
         next_difficulty = 1;
 
     return next_difficulty;
+  }
+    difficulty_type next_difficulty_v3(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds) {
+
+uint64_t  T = DIFFICULTY_TARGET_V2;
+uint64_t  N = DIFFICULTY_WINDOW_V2; // N=45, 60, and 90 for T=600, 120, 60.
+uint64_t  L(0), ST, sum_3_ST(0), next_difficulty, prev_difficulty, this_timestamp, previous_timestamp;
+    
+ assert(timestamps.size() == cumulative_difficulties.size() && 
+                 timestamps.size() <= N+1 );
+
+// If it's a new coin, do startup code. 
+// Increase difficulty_guess if it needs to be much higher, but guess lower than lowest guess.
+uint64_t difficulty_guess = 100; 
+if (timestamps.size() <= 10 ) {   return difficulty_guess;   }
+if ( timestamps.size() < N +1 ) { N = timestamps.size()-1;  }
+
+// If hashrate/difficulty ratio after a fork is < 1/3 prior ratio, hardcode D for N+1 blocks after fork. 
+// difficulty_guess = 100; //  Dev may change.  Guess low.
+// if (height <= UPGRADE_HEIGHT + N+1 ) { return difficulty_guess;  }
+
+previous_timestamp = timestamps[0];
+for ( uint64_t i = 1; i <= N; i++) {  
+   if ( timestamps[i] > previous_timestamp  ) {   
+      this_timestamp = timestamps[i];
+   } else {  this_timestamp = previous_timestamp+1;   }
+   ST = std::min(6*T ,this_timestamp - previous_timestamp);
+   previous_timestamp = this_timestamp;
+   L +=  ST * i ; 
+   // delete the following line if you do not want the "jump rule"
+   if ( i > N-3 ) { sum_3_ST += ST; } 
+}
+
+next_difficulty = ((cumulative_difficulties[N] - cumulative_difficulties[0])*T*(N+1)*99)/(100*2*L);
+prev_difficulty = cumulative_difficulties[N] - cumulative_difficulties[N-1]; 
+next_difficulty = std::max((prev_difficulty*67)/100, std::min(next_difficulty, (prev_difficulty*150)/100)); 
+
+// delete the following line if you do not want the "jump rule"
+if ( sum_3_ST < (8*T)/10) {  next_difficulty = std::max(next_difficulty,(prev_difficulty*108)/100); } 
+
+return next_difficulty;
   }
 }

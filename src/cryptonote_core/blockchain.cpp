@@ -95,7 +95,7 @@ static const struct {
   // version 7 from the start of the blockchain, inhereted from Monero mainnet
   { 7, 1, 0, 1503046577 },
   { 8, 3, 0, 1533006000 },
-  { 9, 10000, 0, 1543582714 },
+  { 9, 5000, 0, 1543582714 },
 };
 
 static const struct {
@@ -816,6 +816,7 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   if (m_timestamps_and_difficulties_height != 0 && ((height - m_timestamps_and_difficulties_height) == 1) && m_timestamps.size() >= difficulty_blocks_count)
   {
     uint64_t index = height - 1;
+	uint8_t version = get_current_hard_fork_version();
     m_timestamps.push_back(m_db->get_block_timestamp(index));
     m_difficulties.push_back(m_db->get_block_cumulative_difficulty(index));
 
@@ -852,7 +853,15 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_difficulties = difficulties;
   }
   size_t target = get_difficulty_target();
-  difficulty_type diff = next_difficulty_v2(timestamps, difficulties, target);
+  difficulty_type diff;
+  if (version < 9)
+  {
+	diff = next_difficulty_v2(timestamps, difficulties, target);
+  }
+  else
+  {
+	diff = next_difficulty_v3(timestamps, difficulties, target);
+  }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
   m_difficulty_for_next_block_top_hash = top_hash;
@@ -1070,7 +1079,14 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   size_t target = DIFFICULTY_TARGET_V2;
 
   // calculate the difficulty target for the block and return it
-  return next_difficulty_v2(timestamps, cumulative_difficulties, target);
+ if (version < 9)
+ {
+	return next_difficulty_v2(timestamps, cumulative_difficulties, target);
+ }
+ else
+ {
+	 return next_difficulty_v3(timestamps, cumulative_difficulties, target);
+ }
 }
 
 //------------------------------------------------------------------
@@ -3386,17 +3402,12 @@ bool Blockchain::check_block_timestamp(std::vector<uint64_t>& timestamps, const 
 bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) const
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
-  uint64_t cryptonote_block_future_time_limit;
-  uint8_t version = get_current_hard_fork_version();
-  if (version < 9 )
-  { 
-	get_current_hard_fork_version = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2;
-  }
-  else 
-	 get_current_hard_fork_version = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3;
+  
+  uint64_t cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2;
+
   if(b.timestamp > get_adjusted_time() + cryptonote_block_future_time_limit)
   {
-    MERROR_VER("Timestamp of block with id: " << get_block_hash(b) << ", " << b.timestamp << ", bigger than adjusted time + 3 minutes");
+    MERROR_VER("Timestamp of block with id: " << get_block_hash(b) << ", " << b.timestamp << ", bigger than adjusted time + 10 minutes");
     return false;
   }
 
