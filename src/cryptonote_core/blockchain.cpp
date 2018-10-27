@@ -816,6 +816,7 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   if (m_timestamps_and_difficulties_height != 0 && ((height - m_timestamps_and_difficulties_height) == 1) && m_timestamps.size() >= difficulty_blocks_count)
   {
     uint64_t index = height - 1;
+	uint8_t version = get_current_hard_fork_version();
     m_timestamps.push_back(m_db->get_block_timestamp(index));
     m_difficulties.push_back(m_db->get_block_cumulative_difficulty(index));
 
@@ -852,7 +853,14 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_difficulties = difficulties;
   }
   size_t target = get_difficulty_target();
-  difficulty_type diff = next_difficulty_v2(timestamps, difficulties, target);
+  if (version < 9)
+  {
+	difficulty_type diff = next_difficulty_v2(timestamps, difficulties, target);
+  }
+  else
+  {
+	difficulty_type diff = next_difficulty_v3(timestamps, difficulties, target);
+  }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
   m_difficulty_for_next_block_top_hash = top_hash;
@@ -1070,7 +1078,14 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   size_t target = DIFFICULTY_TARGET_V2;
 
   // calculate the difficulty target for the block and return it
-  return next_difficulty_v2(timestamps, cumulative_difficulties, target);
+ if (version < 9)
+ {
+	return next_difficulty_v2(timestamps, cumulative_difficulties, target);
+ }
+ else
+ {
+	 return next_difficulty_v3(timestamps, cumulative_difficulties, target);
+ }
 }
 
 //------------------------------------------------------------------
