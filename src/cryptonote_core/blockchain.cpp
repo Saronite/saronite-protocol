@@ -853,13 +853,14 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_difficulties = difficulties;
   }
   size_t target = get_difficulty_target();
+  difficulty_type diff;
   if (version < 9)
   {
-	difficulty_type diff = next_difficulty_v2(timestamps, difficulties, target);
+	diff = next_difficulty_v2(timestamps, difficulties, target);
   }
   else
   {
-	difficulty_type diff = next_difficulty_v3(timestamps, difficulties, target);
+	diff = next_difficulty_v3(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
