@@ -3406,10 +3406,10 @@ bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) cons
   uint8_t version = get_current_hard_fork_version();
   if (version < 9 )
   { 
-	get_current_hard_fork_version = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2;
+	cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2;
   }
   else 
-	 get_current_hard_fork_version = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3;
+	 cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3;
   if(b.timestamp > get_adjusted_time() + cryptonote_block_future_time_limit)
   {
     MERROR_VER("Timestamp of block with id: " << get_block_hash(b) << ", " << b.timestamp << ", bigger than adjusted time + 3 minutes");
