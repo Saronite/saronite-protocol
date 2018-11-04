@@ -2405,7 +2405,7 @@ bool t_rpc_command_executor::prepare_registration()
   else
   {
     std::string operating_cost_string;
-    std::cout << "What percentage of the total staking reward would the operator like to reserve as an operator fee [0-100]%: ";
+    std::cout << "What percentage of the total staking reward would the operator like to reserve as an operator fee [0-100]% (Tipical between 1-10%): ";
     std::cin >> operating_cost_string;
     
     // remove any trailing '%'
