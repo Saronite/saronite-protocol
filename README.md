@@ -23,7 +23,7 @@ Saronite is a private cryptocurrency based on Monero. Saronite project aims to o
 
 More information on the project can be found on the website and in the whitepaper.
 
-Saronite is an open source project, and we encourage contributions from anyone with something to offer. For more information on contributing, please contact team@saronite.io
+Saronite is an open source project, and we encourage contributions from anyone with something to offer. For more information on contributing, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Compiling Saronite from source
 
