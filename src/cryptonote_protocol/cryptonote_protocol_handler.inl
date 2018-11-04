@@ -1212,7 +1212,7 @@ skip:
 
           m_block_queue.remove_spans(span_connection_id, start_height);
 
-          if (m_core.get_current_blockchain_height() > previous_height)
+        if (m_core.get_current_blockchain_height() > previous_height)
           {
             const boost::posix_time::time_duration dt = boost::posix_time::microsec_clock::universal_time() - start;
             std::string timing_message = "";
@@ -1222,8 +1222,20 @@ skip:
                 + " blocks/sec), " + std::to_string(m_block_queue.get_data_size() / 1048576.f) + " MB queued";
             if (ELPP->vRegistry()->allowed(el::Level::Debug, "sync-info"))
               timing_message += std::string(": ") + m_block_queue.get_overview();
+            if(m_core.get_target_blockchain_height() == 0){
             MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
                 << timing_message);
+            } else {
+              const int completition_percent = (m_core.get_current_blockchain_height() * 100 / m_core.get_target_blockchain_height());
+              if(completition_percent < 99) {
+                MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
+                  << " (" << completition_percent << "% " << (m_core.get_target_blockchain_height() - m_core.get_current_blockchain_height())
+                  << " blocks remaining)" << timing_message);
+              } else {
+                MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
+                  << timing_message);
+			    }
+			}
           }
         }
       }
