@@ -6,6 +6,8 @@
 
 */
 
+// Copyright (c)      2018, Saronite Protocol
+//
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c)      2018, The Loki Project
 // 

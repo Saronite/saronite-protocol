@@ -1,3 +1,5 @@
+// Copyright (c)      2018, Saronite Protocol
+//
 // Copyright (c)      2018, The Loki Project
 //
 // All rights reserved.
