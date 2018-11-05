@@ -505,7 +505,16 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 
 		ax ^= bx;
 		idx = scratchpad_ptr(ax.v64x0);
-		if(VERSION > 0)
+		if(VERSION > 1)
+		{
+			int64_t n = idx.as_qword(0);
+			int32_t d = idx.as_dword(2);
+			int64_t q = n / (d | 5);
+			idx.as_qword(0) = n ^ q;
+			// Tweak courtesy of Imperdin (https://github.com/Imperdin)
+			idx = scratchpad_ptr(d ^ q ^ 0x33c70f);
+		}
+		else if(VERSION == 1)
 		{
 			int64_t n  = idx.as_qword(0);
 			int32_t d  = idx.as_dword(2);
@@ -535,7 +544,7 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 		ax.write(idx);
 		ax ^= cx;
 		idx = scratchpad_ptr(ax.v64x0);
-		if(VERSION > 0)
+		if(VERSION > 1)
 		{
 			int64_t n  = idx.as_qword(0); // read bytes 0 - 7
 			int32_t d  = idx.as_dword(2); // read bytes 8 - 11
@@ -544,6 +553,13 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 			asm volatile ("nop"); //Fix for RasPi3 ARM - maybe needed on armv8 
 #endif
 
+			int64_t q = n / (d | 5);
+			idx.as_qword(0) = n ^ q;
+			// Tweak courtesy of Imperdin (https://github.com/Imperdin)
+			idx = scratchpad_ptr(d ^ q ^ 0x33c70f);
+		} else if(VERSION == 1) {
+			int64_t n  = idx.as_qword(0); // read bytes 0 - 7
+			int32_t d  = idx.as_dword(2); // read bytes 8 - 11
 			int64_t q = n / (d | 5);
 			idx.as_qword(0) = n ^ q;
 			idx = scratchpad_ptr(d ^ q);
@@ -573,3 +589,4 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 
 template class cn_slow_hash<2*1024*1024, 0x80000, 0>;
 template class cn_slow_hash<4*1024*1024, 0x40000, 1>;
+template class cn_slow_hash<4*1024*1024, 0x40000, 2>;

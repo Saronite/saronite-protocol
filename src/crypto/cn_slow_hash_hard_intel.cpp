@@ -365,7 +365,16 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::hardware_hash(const void* in, size_t len
 		al0 ^= cl;
 		idx0 = al0;
 		
-		if(VERSION > 0)
+		if(VERSION > 1)
+		{
+			int64_t n  = scratchpad_ptr(idx0).as_qword(0);
+			int32_t d  = scratchpad_ptr(idx0).as_dword(2);
+			int64_t q = n / (d | 5);
+			scratchpad_ptr(idx0).as_qword(0) = n ^ q;
+			// Tweak courtesy of Imperdin (https://github.com/Imperdin)
+			idx0 = d ^ q ^ 0x33c70f;
+		}
+		else if (VERSION == 1)
 		{
 			int64_t n  = scratchpad_ptr(idx0).as_qword(0);
 			int32_t d  = scratchpad_ptr(idx0).as_dword(2);
@@ -398,5 +407,6 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::hardware_hash(const void* in, size_t len
 
 template class cn_slow_hash<2*1024*1024, 0x80000, 0>;
 template class cn_slow_hash<4*1024*1024, 0x40000, 1>;
+template class cn_slow_hash<4*1024*1024, 0x40000, 2>;
 
 #endif
