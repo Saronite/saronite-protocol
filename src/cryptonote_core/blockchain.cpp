@@ -863,9 +863,13 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   {
 	diff = next_difficulty_v2(timestamps, difficulties, target);
   }
-  else
+  else if (version == 9)
   {
 	diff = next_difficulty_v3(timestamps, difficulties, target);
+  }
+  else 
+  {
+	diff = next_difficulty_v4(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
@@ -1088,9 +1092,13 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
  {
 	return next_difficulty_v2(timestamps, cumulative_difficulties, target);
  }
- else
+ else if (version == 9)
  {
 	 return next_difficulty_v3(timestamps, cumulative_difficulties, target);
+ }
+ else
+ {
+	 return next_difficulty_v4(timestamps, cumulative_difficulties, target);
  }
 }
 
