@@ -111,7 +111,7 @@ static const struct {
   { 7, 1, 0, 1533631121 },
   { 8, 3, 0, 1533631122 },
   { 9, 5, 0, 1533631123 },
-  { 10, 9, 0, 1533631123 },
+  { 10, 11, 0, 1543631123 },
 };
 
 static const struct {
@@ -863,13 +863,9 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   {
 	diff = next_difficulty_v2(timestamps, difficulties, target);
   }
-  else if (version == 9)
+  else
   {
 	diff = next_difficulty_v3(timestamps, difficulties, target);
-  }
-  else 
-  {
-	diff = next_difficulty_v4(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
@@ -1092,13 +1088,9 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
  {
 	return next_difficulty_v2(timestamps, cumulative_difficulties, target);
  }
- else if (version == 9)
- {
-	 return next_difficulty_v3(timestamps, cumulative_difficulties, target);
- }
  else
  {
-	 return next_difficulty_v4(timestamps, cumulative_difficulties, target);
+	 return next_difficulty_v3(timestamps, cumulative_difficulties, target);
  }
 }
 

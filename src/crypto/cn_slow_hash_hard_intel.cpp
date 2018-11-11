@@ -323,11 +323,29 @@ inline uint64_t xmm_extract_64(__m128i x)
 #endif
 }
 
+inline void cryptonight_monero_tweak(uint64_t* mem_out, __m128i tmp)
+{
+	mem_out[0] = _mm_cvtsi128_si64(tmp);
+ 	tmp = _mm_castps_si128(_mm_movehl_ps(_mm_castsi128_ps(tmp), _mm_castsi128_ps(tmp)));
+	uint64_t vh = _mm_cvtsi128_si64(tmp);
+ 	uint8_t x = static_cast<uint8_t>(vh >> 24);
+	static const uint16_t table = 0x7531;
+	const uint8_t index = (((x >> 3) & 6) | (x & 1)) << 1;
+	vh ^= ((table >> index) & 0x3) << 28;
+ 	mem_out[1] = vh;
+}
+
 template<size_t MEMORY, size_t ITER, size_t VERSION>
 void cn_slow_hash<MEMORY,ITER,VERSION>::hardware_hash(const void* in, size_t len, void* out, bool prehashed)
 {
 	if (!prehashed)
 		keccak((const uint8_t *)in, len, spad.as_byte(), 200);
+
+  uint64_t monero_const;
+  if (VERSION > 1) {
+    monero_const = *reinterpret_cast<const uint64_t*>(reinterpret_cast<const uint8_t*>(in) + 35);
+    monero_const ^= spad.as_uqword(24);
+  }
 
 	explode_scratchpad_hard();
 	
@@ -347,7 +365,12 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::hardware_hash(const void* in, size_t len
 
 		cx = _mm_aesenc_si128(cx, _mm_set_epi64x(ah0, al0));
 
+    if (VERSION > 1) {
+      cryptonight_monero_tweak(scratchpad_ptr(idx0).as_uqword(), _mm_xor_si128(bx0, cx));
+    } else {
 		_mm_store_si128(scratchpad_ptr(idx0).as_xmm(), _mm_xor_si128(bx0, cx));
+	}
+	
 		idx0 = xmm_extract_64(cx);
 		bx0 = cx;
 
@@ -360,21 +383,16 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::hardware_hash(const void* in, size_t len
 		al0 += hi;
 		ah0 += lo;
 		scratchpad_ptr(idx0).as_uqword(0) = al0;
+    if (VERSION > 1) {
+      scratchpad_ptr(idx0).as_uqword(1) = ah0 ^ monero_const ^ al0;
+    } else {
 		scratchpad_ptr(idx0).as_uqword(1) = ah0;
+	}
 		ah0 ^= ch;
 		al0 ^= cl;
 		idx0 = al0;
 		
-		if(VERSION > 1)
-		{
-			int64_t n  = scratchpad_ptr(idx0).as_qword(0);
-			int32_t d  = scratchpad_ptr(idx0).as_dword(2);
-			int64_t q = n / (d | 5);
-			scratchpad_ptr(idx0).as_qword(0) = n ^ q;
-			// Tweak courtesy of Imperdin (https://github.com/Imperdin)
-			idx0 = d ^ q ^ 0x33c70f;
-		}
-		else if (VERSION == 1)
+	if(VERSION > 0)
 		{
 			int64_t n  = scratchpad_ptr(idx0).as_qword(0);
 			int32_t d  = scratchpad_ptr(idx0).as_dword(2);

@@ -177,7 +177,7 @@ namespace cryptonote {
     // The divisor k normalizes the LWMA sum to a standard LWMA.
     const double k = N * (N + 1) / 2;
 
-    double LWMA(0), sum_inverse_difficulty(0), harmonic_mean_difficulty(0), nextDifficulty(0);
+    double LWMA(0), sum_inverse_D(0), harmonic_mean_D(0), nextDifficulty(0);
     int64_t solveTime(0);
     uint64_t difficulty(0), next_difficulty(0);
 
@@ -187,19 +187,19 @@ namespace cryptonote {
       solveTime = std::min<int64_t>((T * 7), std::max<int64_t>(solveTime, (-7 * T)));
       difficulty = cumulative_difficulties[i] - cumulative_difficulties[i - 1];
       LWMA += (solveTime * i) / k;
-      sum_inverse_difficulty += 1 / static_cast<double>(difficulty);
+      sum_inverse_D += 1 / static_cast<double>(difficulty);
     }
 
-    harmonic_mean_difficulty = N / sum_inverse_difficulty;
+    harmonic_mean_D = N / sum_inverse_D;
 
     // Keep LWMA sane in case something unforeseen occurs.
     if (static_cast<int64_t>(saronite_round(LWMA)) < T / 20)
       LWMA = static_cast<double>(T / 20);
 
-    nextDifficulty = harmonic_mean_difficulty * T / LWMA * adjust;
+    nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
 
     // No limits should be employed, but this is correct way to employ a 20% symmetrical limit:
-    // nextDifficulty=max(previous_difficulty*0.8,min(previous_difficulty/0.8, next_difficulty));
+    // nextDifficulty=max(previous_Difficulty*0.8,min(previous_Difficulty/0.8, next_difficulty));
     next_difficulty = static_cast<uint64_t>(nextDifficulty);
 
     if (next_difficulty == 0)
@@ -207,54 +207,12 @@ namespace cryptonote {
 
     return next_difficulty;
   }
-    difficulty_type next_difficulty_v3(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds) {
-
-uint64_t  T = DIFFICULTY_TARGET_V2;
-uint64_t  N = DIFFICULTY_WINDOW_V2; // N=45, 60, and 90 for T=600, 120, 60.
-uint64_t  L(0), ST, sum_3_ST(0), next_difficulty, prev_difficulty, this_timestamp, previous_timestamp;
-    
- assert(timestamps.size() == cumulative_difficulties.size() && 
-                 timestamps.size() <= N+1 );
-
-// If it's a new coin, do startup code. 
-// Increase difficulty_guess if it needs to be much higher, but guess lower than lowest guess.
-uint64_t difficulty_guess = 100; 
-if (timestamps.size() <= 10 ) {   return difficulty_guess;   }
-if ( timestamps.size() < N +1 ) { N = timestamps.size()-1;  }
-
-// If hashrate/difficulty ratio after a fork is < 1/3 prior ratio, hardcode D for N+1 blocks after fork. 
-// difficulty_guess = 100; //  Dev may change.  Guess low.
-// if (height <= UPGRADE_HEIGHT + N+1 ) { return difficulty_guess;  }
-
-previous_timestamp = timestamps[0];
-for ( uint64_t i = 1; i <= N; i++) {  
-   if ( timestamps[i] > previous_timestamp  ) {   
-      this_timestamp = timestamps[i];
-   } else {  this_timestamp = previous_timestamp+1;   }
-   ST = std::min(6*T ,this_timestamp - previous_timestamp);
-   previous_timestamp = this_timestamp;
-   L +=  ST * i ; 
-   // delete the following line if you do not want the "jump rule"
-   if ( i > N-3 ) { sum_3_ST += ST; } 
-}
-
-next_difficulty = ((cumulative_difficulties[N] - cumulative_difficulties[0])*T*(N+1)*99)/(100*2*L);
-prev_difficulty = cumulative_difficulties[N] - cumulative_difficulties[N-1]; 
-next_difficulty = std::max((prev_difficulty*67)/100, std::min(next_difficulty, (prev_difficulty*150)/100)); 
-
-// delete the following line if you do not want the "jump rule"
-if ( sum_3_ST < (8*T)/10) {  next_difficulty = std::max(next_difficulty,(prev_difficulty*108)/100); } 
-
-return next_difficulty;
-  }
-  
-  
 // LWMA-4 difficulty algorithm 
 // Copyright (c) 2017-2018 Zawy, MIT License
 // https://github.com/zawy12/difficulty-algorithms/issues/3
 // See commented version for explanations & required config file changes. Fix FTL and MTP!
 
-difficulty_type next_difficulty_v4(std::vector<uint64_t> timestamps, 
+difficulty_type next_difficulty_v3(std::vector<uint64_t> timestamps, 
    std::vector<difficulty_type> cumulative_difficulties) {
     
    uint64_t  T = DIFFICULTY_TARGET_V2;
@@ -269,6 +227,7 @@ difficulty_type next_difficulty_v4(std::vector<uint64_t> timestamps,
    if ( timestamps.size()  < N +1 ) { N = timestamps.size()-1;  }
    
    // If hashrate/difficulty ratio after a fork is < 1/3 prior ratio, hardcode D for N+1 blocks after fork. 
+   // This will also cover up a very common type of backwards-incompatible fork.
    // difficulty_guess = 100000; //  Dev may change.  Guess low than anything expected.
    // if ( height <= UPGRADE_HEIGHT + 1 + N ) { return difficulty_guess;  }
  
@@ -281,16 +240,16 @@ difficulty_type next_difficulty_v4(std::vector<uint64_t> timestamps,
    }
 
    for ( i = 1; i <= N; i++) {  
-      // Ignore long solvetimes if they were preceeded by 3 or 6 fast solves.
-      if ( i > 4 && TS[i]-TS[i-1] > 4*T  && TS[i-1] - TS[i-4] < (16*T)/10 ) {   ST = T; }
-      else if ( i > 7 && TS[i]-TS[i-1] > 4*T  && TS[i-1] - TS[i-7] < 4*T ) {   ST = T; }
+      // Temper long solvetime drops if they were preceded by 3 or 6 fast solves.
+      if ( i > 4 && TS[i]-TS[i-1] > 5*T  && TS[i-1] - TS[i-4] < (14*T)/10 ) {   ST = 2*T; }
+      else if ( i > 7 && TS[i]-TS[i-1] > 5*T  && TS[i-1] - TS[i-7] < 4*T ) {   ST = 2*T; }
       else { // Assume normal conditions, so get ST.
          // LWMA drops too much from long ST, so limit drops with a 5*T limit 
          ST = std::min(5*T ,TS[i] - TS[i-1]);
       }
       L +=  ST * i ; 
    } 
-   if (L < N*N*T/40 ) { L =  N*N*T/40; } 
+   if (L < N*N*T/20 ) { L =  N*N*T/20; } 
    avg_difficulty = ( cumulative_difficulties[N] - cumulative_difficulties[0] )/ N;
    
    // Prevent round off error for small D and overflow for large D.
