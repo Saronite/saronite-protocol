@@ -35,6 +35,7 @@
 using namespace epee;
 
 #include <atomic>
+#include <mutex>
 #include <boost/algorithm/string.hpp>
 #include "wipeable_string.h"
 #include "common/i18n.h"
@@ -1232,7 +1233,19 @@ namespace cryptonote
   bool get_block_longhash(const block& b, crypto::hash& res, uint64_t height)
   {
     blobdata bd = get_block_hashing_blob(b);
-    const int cn_variant = b.major_version >= 7 ? b.major_version - 6 : 0;
+    int cn_variant;
+	if (b.major_version < 7)
+	{
+		cn_variant = 0;
+	}
+	else if (b.major_version <= 9)
+	{
+		cn_variant = 1;
+	}
+	else
+	{
+		cn_variant = 2;
+	}
     crypto::cn_slow_hash(bd.data(), bd.size(), res, cn_variant);
     return true;
   }
