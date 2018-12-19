@@ -57,7 +57,7 @@ public:
   bool handle_incoming_tx(const cryptonote::blobdata& tx_blob, cryptonote::tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay) { return true; }
   bool handle_incoming_txs(const std::vector<cryptonote::blobdata>& tx_blob, std::vector<cryptonote::tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay) { return true; }
   bool handle_incoming_block(const cryptonote::blobdata& block_blob, cryptonote::block_verification_context& bvc, bool update_miner_blocktemplate = true) { return true; }
-  bool handle_uptime_proof(uint64_t timestamp, const crypto::public_key& pubkey, const crypto::signature& sig) { return false; }
+  bool handle_uptime_proof(const cryptonote::NOTIFY_UPTIME_PROOF::request &proof) { return false; }
   void pause_mine(){}
   void resume_mine(){}
   bool on_idle(){return true;}
@@ -80,14 +80,15 @@ public:
   uint8_t get_ideal_hard_fork_version() const { return 0; }
   uint8_t get_ideal_hard_fork_version(uint64_t height) const { return 0; }
   uint8_t get_hard_fork_version(uint64_t height) const { return 0; }
+  uint64_t get_earliest_ideal_height_for_version(uint8_t version) const { return 0; }
   cryptonote::difficulty_type get_block_cumulative_difficulty(uint64_t height) const { return 0; }
   bool fluffy_blocks_enabled() const { return false; }
   uint64_t prevalidate_block_hashes(uint64_t height, const std::vector<crypto::hash> &hashes) { return 0; }
   void stop() {}
 
-  // TODO(saronite): Write tests
-  bool add_deregister_vote(const saronite::service_node_deregister::vote& vote, cryptonote::vote_verification_context &vvc) { return true; }
-  virtual void set_deregister_votes_relayed(const std::vector<saronite::service_node_deregister::vote>& votes) {}
+  // TODO(loki): Write tests
+  bool add_deregister_vote(const loki::service_node_deregister::vote& vote, cryptonote::vote_verification_context &vvc) { return true; }
+  virtual void set_deregister_votes_relayed(const std::vector<loki::service_node_deregister::vote>& votes) {}
 };
 
 typedef nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<test_core>> Server;

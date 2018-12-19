@@ -2,8 +2,6 @@
 /// @author rfree (current maintainer/user in monero.cc project - most of code is from CryptoNote)
 /// @brief This is the original cryptonote protocol network-events handler, modified by us
 
-// Copyright (c)      2018, Saronite Protocol
-//
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c)      2018, The Loki Project
 //
@@ -689,7 +687,7 @@ namespace cryptonote
     MLOG_P2P_MESSAGE("Received NOTIFY_UPTIME_PROOF");
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
-    if (m_core.handle_uptime_proof(arg.timestamp, arg.pubkey, arg.sig))
+    if (m_core.handle_uptime_proof(arg))
       relay_uptime_proof(arg, context);
     return 1;
   }
@@ -1214,7 +1212,7 @@ skip:
 
           m_block_queue.remove_spans(span_connection_id, start_height);
 
-        if (m_core.get_current_blockchain_height() > previous_height)
+          if (m_core.get_current_blockchain_height() > previous_height)
           {
             const boost::posix_time::time_duration dt = boost::posix_time::microsec_clock::universal_time() - start;
             std::string timing_message = "";
@@ -1225,19 +1223,19 @@ skip:
             if (ELPP->vRegistry()->allowed(el::Level::Debug, "sync-info"))
               timing_message += std::string(": ") + m_block_queue.get_overview();
             if(m_core.get_target_blockchain_height() == 0){
-            MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
+              MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
                 << timing_message);
             } else {
               const int completition_percent = (m_core.get_current_blockchain_height() * 100 / m_core.get_target_blockchain_height());
-              if(completition_percent < 99) {
+              if(completition_percent < 99) {//printing completion percent only if % is < of 99 cause for 99 >= this is useless
                 MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
                   << " (" << completition_percent << "% " << (m_core.get_target_blockchain_height() - m_core.get_current_blockchain_height())
                   << " blocks remaining)" << timing_message);
               } else {
                 MGINFO_YELLOW(context << " Synced " << m_core.get_current_blockchain_height() << "/" << m_core.get_target_blockchain_height()
                   << timing_message);
-			    }
-			}
+              }
+            }
           }
         }
       }
@@ -1739,11 +1737,6 @@ skip:
     fluffy_arg.b = arg.b;
     fluffy_arg.b.txs = fluffy_txs;
 
-    // pre-serialize them
-    std::string fullBlob, fluffyBlob;
-    epee::serialization::store_t_to_binary(arg, fullBlob);
-    epee::serialization::store_t_to_binary(fluffy_arg, fluffyBlob);
-
     // sort peers between fluffy ones and others
     std::list<boost::uuids::uuid> fullConnections, fluffyConnections;
     m_p2p->for_each_connection([this, &exclude_context, &fullConnections, &fluffyConnections](connection_context& context, nodetool::peerid_type peer_id, uint32_t support_flags)
@@ -1765,8 +1758,18 @@ skip:
     });
 
     // send fluffy ones first, we want to encourage people to run that
-    m_p2p->relay_notify_to_list(NOTIFY_NEW_FLUFFY_BLOCK::ID, fluffyBlob, fluffyConnections);
-    m_p2p->relay_notify_to_list(NOTIFY_NEW_BLOCK::ID, fullBlob, fullConnections);
+    if (!fluffyConnections.empty())
+    {
+      std::string fluffyBlob;
+      epee::serialization::store_t_to_binary(fluffy_arg, fluffyBlob);
+      m_p2p->relay_notify_to_list(NOTIFY_NEW_FLUFFY_BLOCK::ID, fluffyBlob, fluffyConnections);
+    }
+    if (!fullConnections.empty())
+    {
+      std::string fullBlob;
+      epee::serialization::store_t_to_binary(arg, fullBlob);
+      m_p2p->relay_notify_to_list(NOTIFY_NEW_BLOCK::ID, fullBlob, fullConnections);
+    }
 
     return true;
   }
@@ -1797,6 +1800,9 @@ skip:
   template<class t_core>
   void t_cryptonote_protocol_handler<t_core>::drop_connection(cryptonote_connection_context &context, bool add_fail, bool flush_all_spans)
   {
+    LOG_DEBUG_CC(context, "dropping connection id " << context.m_connection_id <<
+        ", add_fail " << add_fail << ", flush_all_spans " << flush_all_spans);
+
     if (add_fail)
       m_p2p->add_host_fail(context.m_remote_address);
 

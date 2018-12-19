@@ -1,6 +1,6 @@
 // Copyright (c)      2018, Saronite Protocol
 //
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2017-2018, The Monero Project
 // Copyright (c)      2018, The Loki Project
 // 
 // All rights reserved.
@@ -67,12 +67,12 @@ namespace tools
         continue;
 
       bool alnum = true;
-      for (auto c: hash)
+      for (auto c: fields[3])
         if (!isalnum(c))
           alnum = false;
-      if (hash.size() != 64 && !alnum)
+      if (fields[3].size() != 64 && !alnum)
       {
-        MWARNING("Invalid hash: " << hash);
+        MWARNING("Invalid hash: " << fields[3]);
         continue;
       }
 

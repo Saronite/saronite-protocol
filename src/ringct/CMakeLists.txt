@@ -1,7 +1,5 @@
-# Copyright (c)      2018, Saronite Protocol
-#
-# Copyright (c) 2014-2018, The Monero Project
-#/ Copyright (c)      2018, The Loki Project
+# Copyright (c) 2018, The Loki Project
+# Copyright (c) 2016-2018, The Monero Project
 #
 # All rights reserved.
 #
@@ -33,11 +31,13 @@ set(ringct_basic_sources
   rctOps.cpp
   rctTypes.cpp
   rctCryptoOps.c
+  multiexp.cc
   bulletproofs.cc)
 
 set(ringct_basic_private_headers
   rctOps.h
   rctTypes.h
+  multiexp.h
   bulletproofs.h)
 
 saronite_private_headers(ringct_basic

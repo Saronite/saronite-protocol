@@ -1,6 +1,6 @@
 // Copyright (c)      2018, Saronite Protocol
 //
-// Copyright (c)      2018, The Loki Project
+// Copyright (c) 2018, The Loki Project
 //
 // All rights reserved.
 //
@@ -43,6 +43,7 @@
 namespace cryptonote
 {
   struct vote_verification_context;
+  struct tx_extra_service_node_deregister;
 };
 
 namespace service_nodes
@@ -135,4 +136,3 @@ namespace saronite
       mutable epee::critical_section m_lock;
   };
 }; // namespace saronite
-
