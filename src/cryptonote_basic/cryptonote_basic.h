@@ -194,6 +194,7 @@ namespace cryptonote
     END_SERIALIZE()
 
   public:
+    transaction_prefix(){}
     bool is_deregister_tx() const { return (version >= version_3_per_output_unlock_times) && is_deregister; }
     uint64_t get_unlock_time(size_t out_index) const
     {

@@ -1327,8 +1327,8 @@ void wallet2::scan_output(const cryptonote::transaction &tx, const crypto::publi
     if (!m_encrypt_keys_after_refresh)
     {
       boost::optional<epee::wipeable_string> pwd = m_callback->on_get_password("output received");
-      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming monero"));
-      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming monero"));
+      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming saronite"));
+      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming saronite"));
       decrypt_keys(*pwd);
       m_encrypt_keys_after_refresh = *pwd;
     }
@@ -1678,7 +1678,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
           auto iter = std::find_if(
               tx_money_got_in_outs.begin(),
               tx_money_got_in_outs.end(),
-              [&tx_scan_info,&tx,&o](const tx_money_got_in_out& value)
+              [&tx_scan_info,&o](const tx_money_got_in_out& value)
               {
                 return value.index == tx_scan_info[o].received->index &&
                   value.amount == tx_scan_info[o].amount &&
@@ -5199,6 +5199,10 @@ void wallet2::rescan_blockchain(bool hard, bool refresh)
     m_transfers.clear();
     m_key_images.clear();
     m_pub_keys.clear();
+    m_unconfirmed_txs.clear();
+    m_payments.clear();
+    m_confirmed_txs.clear();
+    m_unconfirmed_payments.clear();
     m_scanned_pool_txs[0].clear();
     m_scanned_pool_txs[1].clear();
 
@@ -5681,8 +5685,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
     crypto::secret_key tx_key;
     std::vector<crypto::secret_key> additional_tx_keys;
     rct::multisig_out msout;
-    bool per_output_unlock = use_fork_rules(9, 10);
-    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sd.sources, sd.splitted_dsts, sd.change_dts, sd.extra, ptx.tx, sd.unlock_time, tx_key, additional_tx_keys, sd.use_rct, range_proof_type, m_multisig ? &msout : NULL, per_output_unlock);
+    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sd.sources, sd.splitted_dsts, sd.change_dts, sd.extra, ptx.tx, sd.unlock_time, tx_key, additional_tx_keys, sd.use_rct, range_proof_type, m_multisig ? &msout : NULL, sd.per_output_unlock);
     THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sd.sources, sd.splitted_dsts, sd.unlock_time, m_nettype);
     // we don't test tx size, because we don't know the current limit, due to not having a blockchain,
     // and it's a bit pointless to fail there anyway, since it'd be a (good) guess only. We sign anyway,
@@ -6088,13 +6091,9 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs, std::vector<crypto
     rct::RangeProofType range_proof_type = rct::RangeProofBorromean;
     if (sd.use_bulletproofs)
     {
-      range_proof_type = rct::RangeProofBulletproof;
-      for (const rct::Bulletproof &proof: ptx.tx.rct_signatures.p.bulletproofs)
-        if (proof.V.size() > 1)
-          range_proof_type = rct::RangeProofPaddedBulletproof;
+      range_proof_type = rct::RangeProofPaddedBulletproof;
     }
-    bool per_output_unlock = use_fork_rules(9, 10);
-    bool r = cryptonote::construct_tx_with_tx_key(m_account.get_keys(), m_subaddresses, sources, sd.splitted_dsts, ptx.change_dts, sd.extra, tx, sd.unlock_time, ptx.tx_key, ptx.additional_tx_keys, sd.use_rct, range_proof_type, &msout, per_output_unlock, false);
+    bool r = cryptonote::construct_tx_with_tx_key(m_account.get_keys(), m_subaddresses, sources, sd.splitted_dsts, ptx.change_dts, sd.extra, tx, sd.unlock_time, ptx.tx_key, ptx.additional_tx_keys, sd.use_rct, range_proof_type, &msout, sd.per_output_unlock, false);
     THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sd.sources, sd.splitted_dsts, sd.unlock_time, m_nettype);
 
     THROW_WALLET_EXCEPTION_IF(get_transaction_prefix_hash (tx) != get_transaction_prefix_hash(ptx.tx),
@@ -7633,6 +7632,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
   ptx.construction_data.extra = tx.extra;
   ptx.construction_data.unlock_time = unlock_time;
   ptx.construction_data.use_rct = false;
+  ptx.construction_data.per_output_unlock = per_output_unlock;
   ptx.construction_data.use_bulletproofs = false;
   ptx.construction_data.dests = dsts;
   // record which subaddress indices are being used as inputs
@@ -7892,6 +7892,7 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
   ptx.construction_data.unlock_time = unlock_time;
   ptx.construction_data.use_rct = true;
   ptx.construction_data.use_bulletproofs = !tx.rct_signatures.p.bulletproofs.empty();
+  ptx.construction_data.per_output_unlock = per_output_unlock;
   ptx.construction_data.dests = dsts;
   // record which subaddress indices are being used as inputs
   ptx.construction_data.subaddr_account = subaddr_account;

@@ -825,7 +825,6 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   if (m_timestamps_and_difficulties_height != 0 && ((height - m_timestamps_and_difficulties_height) == 1) && m_timestamps.size() >= difficulty_blocks_count)
   {
     uint64_t index = height - 1;
-	uint8_t version = get_current_hard_fork_version();
     m_timestamps.push_back(m_db->get_block_timestamp(index));
     m_difficulties.push_back(m_db->get_block_cumulative_difficulty(index));
 
@@ -1865,10 +1864,15 @@ bool Blockchain::get_output_distribution(uint64_t amount, uint64_t from_height, 
   {
     std::vector<uint64_t> heights;
     heights.reserve(to_height + 1 - start_height);
-    for (uint64_t h = start_height; h <= to_height; ++h)
+    uint64_t real_start_height = start_height > 0 ? start_height-1 : start_height;
+    for (uint64_t h = real_start_height; h <= to_height; ++h)
       heights.push_back(h);
     distribution = m_db->get_block_cumulative_rct_outputs(heights);
-    base = 0;
+    if (start_height > 0)
+    {
+      base = distribution[0];
+      distribution.erase(distribution.begin());
+    }
     return true;
   }
   else
@@ -2417,9 +2421,22 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     const bool borromean = rct::is_rct_borromean(tx.rct_signatures.type);
     if (borromean)
     {
-      MERROR_VER("Borromean range proofs are not allowed after v10");
-      tvc.m_invalid_output = true;
-      return false;
+      uint64_t hf10_height = m_hardfork->get_earliest_ideal_height_for_version(network_version_10_dafix);
+      uint64_t curr_height = this->get_current_blockchain_height();
+      if (curr_height == hf10_height)
+      {
+        // NOTE(loki): Allow the hardforking block to contain a borromean proof
+        // incase there were some transactions in the TX Pool that were
+        // generated pre-HF10 rules. Note, this isn't bulletproof. If there were
+        // more than 1 blocks worth of borromean proof TX's sitting in the pool
+        // this isn't going to work.
+      }
+      else
+      {
+        MERROR_VER("Borromean range proofs are not allowed after v10");
+        tvc.m_invalid_output = true;
+        return false;
+      }
     }
   }
 
