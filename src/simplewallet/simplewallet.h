@@ -57,8 +57,6 @@
 // Hardcode Monero's donation address (see #1447)
 constexpr const char MONERO_DONATION_ADDR[] = "PaiRT9XBm3H7vY17NbokfBfBRThQv9kzMaHtgH6Z7tujAmdPQmgRtYVX81HPwQBAFvATao6pGvG8pAt4Aay7oYsJ3BcKJ2Pmx";
 
-const int AUTOSTAKE_INTERVAL = 60 * 40; // once every 40 minutes.
-
 /*!
  * \namespace cryptonote
  * \brief Holds cryptonote related classes and helpers.
@@ -148,6 +146,7 @@ namespace cryptonote
     bool set_segregation_height(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_ignore_fractional_outputs(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_device_name(const std::vector<std::string> &args = std::vector<std::string>());
+    bool set_fork_on_autostake(const std::vector<std::string> &args = std::vector<std::string>());
     bool help(const std::vector<std::string> &args = std::vector<std::string>());
     bool start_mining(const std::vector<std::string> &args);
     bool stop_mining(const std::vector<std::string> &args);

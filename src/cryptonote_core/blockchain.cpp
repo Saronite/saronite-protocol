@@ -97,7 +97,7 @@ static const struct {
   { network_version_8, 3, 0, 1533006000 },
   { network_version_9_service_nodes, 5000, 0, 1543582714 },
   { network_version_10_dafix, 20000, 0, 1543582714 },
-  { network_version_11_bp, 60000, 0, 1549021706 },
+  { network_version_11_bp, 65000, 0, 1549021706 },
 };
 
 static const struct {
@@ -125,7 +125,7 @@ static const struct {
   { network_version_8, 3, 0, 1533006000 },
   { network_version_9_service_nodes, 5500, 0, 1536840000 },
   { network_version_10_dafix, 15500, 0, 1543631123 },
-  { network_version_11_bp, 60000, 0, 1549021706 },
+  { network_version_11_bp, 65000, 0, 1549021706 },
 };
 
 //------------------------------------------------------------------
@@ -1099,7 +1099,7 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   size_t target = DIFFICULTY_TARGET_V2;
 
   // calculate the difficulty target for the block and return it
- if (version < 9)
+ if (get_current_hard_fork_version() < cryptonote::network_version_9_service_nodes)
  {
 	return next_difficulty_v2(timestamps, cumulative_difficulties, target);
  }
@@ -1160,7 +1160,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
   std::vector<size_t> last_blocks_weights;
   get_last_n_blocks_weights(last_blocks_weights, CRYPTONOTE_REWARD_BLOCKS_WINDOW);
 
-  loki_block_reward_context block_reward_context = {};
+  saronite_block_reward_context block_reward_context = {};
   block_reward_context.fee                       = fee;
   block_reward_context.height                    = height;
   if (!calc_batched_governance_reward(height, block_reward_context.batched_governance))
@@ -1170,7 +1170,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
   }
 
   block_reward_parts reward_parts;
-  if (!get_loki_block_reward(epee::misc_utils::median(last_blocks_weights), cumulative_block_weight, already_generated_coins, version, reward_parts, block_reward_context))
+  if (!get_saronite_block_reward(epee::misc_utils::median(last_blocks_weights), cumulative_block_weight, already_generated_coins, version, reward_parts, block_reward_context))
   {
     MERROR_VER("block weight " << cumulative_block_weight << " is bigger than allowed for this blockchain");
     return false;
@@ -1183,7 +1183,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
   }
   if (already_generated_coins != 0 && block_has_governance_output(nettype(), b))
   {
-    if (version >= network_version_10_bulletproofs && reward_parts.governance == 0)
+    if (version >= network_version_11_bp && reward_parts.governance == 0)
     {
       MERROR("Governance reward should not be 0 after hardfork v10 if this height has a governance output because it is the batched payout height");
       return false;
@@ -1237,7 +1237,7 @@ void Blockchain::get_last_n_blocks_weights(std::vector<size_t>& weights, size_t 
   weights.reserve(weights.size() + h - start_offset);
   for(size_t i = start_offset; i < h; i++)
   {
-    sz.push_back(m_db->get_block_size(i));
+    weights.push_back(m_db->get_block_weight(i));
   }
   m_db->block_txn_stop();
 }
@@ -1842,7 +1842,7 @@ void Blockchain::get_output_key_mask_unlocked(const uint64_t& amount, const uint
 //------------------------------------------------------------------
 bool Blockchain::get_output_distribution(uint64_t amount, uint64_t from_height, uint64_t to_height, uint64_t &start_height, std::vector<uint64_t> &distribution, uint64_t &base) const
 {
-  // rct outputs don't exist before v4, NOTE(loki): we started from v7 so our start is always 0
+  // rct outputs don't exist before v4, NOTE(saronite): we started from v7 so our start is always 0
   start_height = 0;
   base = 0;
 
@@ -2124,7 +2124,7 @@ bool Blockchain::find_blockchain_supplement(const uint64_t req_start_block, cons
   total_height = get_current_blockchain_height();
   size_t count = 0, size = 0;
   blocks.reserve(std::min(std::min(max_count, (size_t)10000), (size_t)(total_height - start_height)));
-  f  for(uint64_t i = start_height; i < total_height && count < max_count && (size < FIND_BLOCKCHAIN_SUPPLEMENT_MAX_SIZE || count < 3); i++, count++)
+  for(uint64_t i = start_height; i < total_height && count < max_count && (size < FIND_BLOCKCHAIN_SUPPLEMENT_MAX_SIZE || count < 3); i++, count++)
   {
     blocks.resize(blocks.size()+1);
     blocks.back().first.first = m_db->get_block_blob_from_height(i);
@@ -3687,7 +3687,7 @@ leave:
   // do this after updating the hard fork state since the weight limit may change due to fork
   update_next_cumulative_weight_limit();
 
-  MINFO("+++++ BLOCK SUCCESSFULLY ADDED" << std::endl << "id:\t" << id << std::endl << "PoW:\t" << proof_of_work << std::endl << "HEIGHT " << new_height-1 << ", difficulty:\t" << current_diffic << std::endl << "block reward: " << print_money(fee_summary + base_reward) << "(" << print_money(base_reward) << " + " << print_money(fee_summary) << "), coinbase_blob_size: " << coinbase_blob_size << ", cumulative size: " << cumulative_block_size << ", " << block_processing_time << "(" << target_calculating_time << "/" << longhash_calculating_time << ")ms");
+  MINFO("+++++ BLOCK SUCCESSFULLY ADDED" << std::endl << "id:\t" << id << std::endl << "PoW:\t" << proof_of_work << std::endl << "HEIGHT " << new_height-1 << ", difficulty:\t" << current_diffic << std::endl << "block reward: " << print_money(fee_summary + base_reward) << "(" << print_money(base_reward) << " + " << print_money(fee_summary) << "), coinbase_weight: " << coinbase_weight << ", cumulative weight: " << cumulative_block_weight << ", " << block_processing_time << "(" << target_calculating_time << "/" << longhash_calculating_time << ")ms");
   if(m_show_time_stats)
   {
     MINFO("Height: " << new_height << " coinbase weight: " << coinbase_weight << " cumm: "
@@ -4088,7 +4088,7 @@ bool Blockchain::calc_batched_governance_reward(uint64_t height, uint64_t &rewar
   for (const auto &it : blocks)
   {
     cryptonote::block const &block = it.second;
-    if (block.major_version >= network_version_10_bulletproofs)
+    if (block.major_version >= network_version_11_bp)
       reward += derive_governance_from_block_reward(nettype(), block);
   }
 
@@ -4274,6 +4274,7 @@ bool Blockchain::prepare_handle_incoming_blocks(const std::vector<block_complete
   // [input] stores all absolute_offsets for each amount
   std::map<uint64_t, std::vector<uint64_t>> offset_map;
   // [output] stores all output_data_t for each absolute_offset
+  std::map<uint64_t, std::vector<output_data_t>> tx_map;
   std::vector<std::pair<cryptonote::transaction, crypto::hash>> txes(total_txs);
 
 #define SCAN_TABLE_QUIT(m) \
