@@ -31,8 +31,8 @@
 //------------------------------------------------------------------------------
 #include "string_tools.h"
 
-#undef LOKI_DEFAULT_LOG_CATEGORY
-#define LOKI_DEFAULT_LOG_CATEGORY "net"
+#undef SARONITE_DEFAULT_LOG_CATEGORY
+#define SARONITE_DEFAULT_LOG_CATEGORY "net"
 
 namespace epee
 {
