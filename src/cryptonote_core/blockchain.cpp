@@ -96,8 +96,8 @@ static const struct {
   { network_version_7, 1, 0, 1503046577 },
   { network_version_8, 3, 0, 1533006000 },
   { network_version_9_service_nodes, 5000, 0, 1543582714 },
-  { network_version_10_dafix, 20000, 0, 1543582714 },
-  { network_version_11_bp, 65000, 0, 1549021706 },
+  { network_version_10_dafix, 20000, 0, 1563582714 },
+  { network_version_11_bp, 65000, 0, 1565021706 },
 };
 
 static const struct {

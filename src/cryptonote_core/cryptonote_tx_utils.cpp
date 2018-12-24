@@ -342,7 +342,7 @@ namespace cryptonote
     {
       if (reward_parts.governance == 0)
       {
-        CHECK_AND_ASSERT_MES(hard_fork_version >= network_version_11_bp, false, "Governance reward can NOT be 0 before hardfork 10, hard_fork_version: " << hard_fork_version);
+        CHECK_AND_ASSERT_MES(hard_fork_version >= network_version_11_bp, false, "Governance reward can NOT be 0 before hardfork 11, hard_fork_version: " << hard_fork_version);
       }
       else
       {
@@ -413,7 +413,7 @@ namespace cryptonote
     result.adjusted_base_reward = result.original_base_reward;
     if (hard_fork_version >= network_version_11_bp)
     {
-      // NOTE: After hardfork 10, remove the governance component in the base
+      // NOTE: After hardfork 11, remove the governance component in the base
       // reward as they are not included and batched into a later block. If we
       // calculated a (governance reward > 0), then this is the batched height,
       // add it to the adjusted base reward afterwards
@@ -924,7 +924,7 @@ namespace cryptonote
      std::vector<crypto::secret_key> additional_tx_keys;
      std::vector<tx_destination_entry> destinations_copy = destinations;
 
-     const rct::RangeProofType rp_type = (hf_version < network_version_11_bp) ?  rct::RangeProofBorromean : rct::RangeProofPaddedBulletproof;
+     const rct::RangeProofType rp_type = (hf_version < network_version_10_dafix) ?  rct::RangeProofBorromean : rct::RangeProofPaddedBulletproof;
      const bool per_output_unlock = (hf_version >= network_version_9_service_nodes);
      return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations_copy, change_addr, extra, tx, unlock_time, tx_key, additional_tx_keys, true, rp_type, NULL, is_staking, per_output_unlock);
   }
