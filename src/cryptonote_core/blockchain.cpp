@@ -2421,9 +2421,9 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     const bool borromean = rct::is_rct_borromean(tx.rct_signatures.type);
     if (borromean)
     {
-      uint64_t hf10_height = m_hardfork->get_earliest_ideal_height_for_version(network_version_10_dafix);
+      uint64_t hf11_height = m_hardfork->get_earliest_ideal_height_for_version(network_version_11_bp);
       uint64_t curr_height = this->get_current_blockchain_height();
-      if (curr_height == hf10_height)
+      if (curr_height == hf11_height)
       {
         // NOTE(saronite): Allow the hardforking block to contain a borromean proof
         // incase there were some transactions in the TX Pool that were
