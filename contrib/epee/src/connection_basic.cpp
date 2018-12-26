@@ -79,8 +79,8 @@
 // TODO:
 #include "net/network_throttle-detail.hpp"
 
-#undef LOKI_DEFAULT_LOG_CATEGORY
-#define LOKI_DEFAULT_LOG_CATEGORY "net.p2p"
+#undef SARONITE_DEFAULT_LOG_CATEGORY
+#define SARONITE_DEFAULT_LOG_CATEGORY "net.p2p"
 
 // ################################################################################################
 // local (TU local) headers

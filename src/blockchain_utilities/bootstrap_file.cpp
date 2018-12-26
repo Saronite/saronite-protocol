@@ -33,8 +33,8 @@
 
 #include "bootstrap_file.h"
 
-#undef LOKI_DEFAULT_LOG_CATEGORY
-#define LOKI_DEFAULT_LOG_CATEGORY "bcutil"
+#undef SARONITE_DEFAULT_LOG_CATEGORY
+#define SARONITE_DEFAULT_LOG_CATEGORY "bcutil"
 
 namespace po = boost::program_options;
 

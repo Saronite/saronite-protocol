@@ -2425,7 +2425,7 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
       uint64_t curr_height = this->get_current_blockchain_height();
       if (curr_height == hf10_height)
       {
-        // NOTE(loki): Allow the hardforking block to contain a borromean proof
+        // NOTE(saronite): Allow the hardforking block to contain a borromean proof
         // incase there were some transactions in the TX Pool that were
         // generated pre-HF10 rules. Note, this isn't bulletproof. If there were
         // more than 1 blocks worth of borromean proof TX's sitting in the pool
